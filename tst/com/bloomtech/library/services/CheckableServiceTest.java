@@ -19,12 +19,16 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class CheckableServiceTest {
 
     //TODO: Inject dependencies and mocks
+    @MockBean
+    private CheckableRepository checkableRepository;
+    @Autowired
+    private CheckableService checkableService;
 
     private List<Checkable> checkables;
 
@@ -47,5 +51,83 @@ public class CheckableServiceTest {
         );
     }
 
-    //TODO: Write Unit Tests for all CheckableService methods and possible Exceptions
+
+    @Test
+    void getAll_noConditions_allCheckablesReturned() {
+        when(checkableRepository.findAll()).thenReturn(checkables);
+
+        assertEquals(checkables, checkableService.getAll());
+
+    }
+    @Test
+    void getByIsbn_isbnExists_checkableReturned() {
+        Checkable checkable = checkables.get(0);
+
+        when(checkableRepository.findByIsbn(checkable.getIsbn())).thenReturn(Optional.of(checkable));
+
+        Checkable checkableFromService = checkableService.getByIsbn(checkable.getIsbn());
+        assertEquals(checkable, checkableFromService);
+        verify(checkableRepository).findByIsbn(anyString());
+
+    }
+
+    @Test
+    void getByIsbn_isbnDoesNotExist_checkableNotFoundExceptionThrown() {
+
+
+        Checkable checkable = new Media("1-0", "The Black Whale", "Melvin H", MediaType.BOOK);
+
+        when(checkableRepository.findByIsbn(checkable.getIsbn())).thenReturn(Optional.empty());
+        assertThrows(CheckableNotFoundException.class, () -> {
+            checkableService.getByIsbn(checkable.getIsbn());
+        });
+    }
+
+
+    @Test
+    void getByType_mediaTypeExists_firstCheckableReturned() {
+        when(checkableRepository.findByType(ScienceKit.class)).thenReturn(Optional.of(checkables.get(4)));
+        Checkable checkableByType = checkableService.getByType(ScienceKit.class);
+        assertEquals(checkables.get(4), checkableByType);
+
+    }
+
+    @Test
+    void getByType_ticketTypeExists_firstCheckableReturned() {
+        when(checkableRepository.findByType(Ticket.class)).thenReturn(Optional.of(checkables.get(6)));
+
+        Checkable checkableByType = checkableService.getByType(ScienceKit.class);
+        assertEquals(checkables.get(6), checkableByType);
+
+    }
+    @Test
+    void getByType_typeDoesNotExist_checkableNotFoundExceptionThrown() {
+        when(checkableRepository.findByType(Ticket.class)).thenReturn(Optional.empty());
+
+        assertThrows(CheckableNotFoundException.class, () -> {
+            checkableService.getByType(Ticket.class);
+        });
+
+    }
+    @Test
+    void save_uniqueIsbn_checkableSaved() {
+        Checkable checkable = new Media("222", "The Black Whale", "Edward", MediaType.BOOK);
+        when(checkableRepository.findAll()).thenReturn(checkables);
+        checkableService.save(checkable);
+        verify(checkableRepository).save(checkable);
+    }
+    @Test
+    void save_duplicateIsbn_resourceExistsExceptionThrown() {
+        Checkable checkable = checkables.get(0);
+        when(checkableRepository.findAll()).thenReturn(checkables);
+
+        assertThrows(ResourceExistsException.class, () -> {
+            checkableService.save(checkable);
+        });
+
+
+
+
+    }
+
 }
