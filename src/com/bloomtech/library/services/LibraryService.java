@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,13 +26,20 @@ public class LibraryService {
 
     @Autowired
     private LibraryRepository libraryRepository;
+    @Autowired
+    private CheckableService checkableService;
 
     public List<Library> getLibraries() {
-        return new ArrayList<>();
+        List<Library> libraries = libraryRepository.findAll();
+
+        return new ArrayList<>(libraries);
     }
 
     public Library getLibraryByName(String name) {
-        return null;
+        Optional<Library> libraries = libraryRepository.findByName(name);
+        Library library = libraries.get();
+
+        return library;
     }
 
     public void save(Library library) {
@@ -43,18 +51,49 @@ public class LibraryService {
     }
 
     public CheckableAmount getCheckableAmount(String libraryName, String checkableIsbn) {
-        return new CheckableAmount(null, 0);
+        Checkable checkable = checkableService.getByIsbn(checkableIsbn);
+        Optional<Library> libraryOptional = libraryRepository.findByName(libraryName);
+
+        Library library = libraryOptional.get();
+        List<CheckableAmount> checkableAmounts = library.getCheckables();
+
+        for (CheckableAmount checkableAmount : checkableAmounts) {
+            if (checkableAmount.getCheckable().equals(checkable)) {
+                return checkableAmount;
+
+            }
+        }
+
+        return new CheckableAmount(checkable,0 );
     }
 
     public List<LibraryAvailableCheckouts> getLibrariesWithAvailableCheckout(String isbn) {
-        List<LibraryAvailableCheckouts> available = new ArrayList<>();
+        Checkable checkable = checkableService.getByIsbn(isbn);
+        List<Library> libraries = libraryRepository.findAll();
 
-        return available;
+        List<LibraryAvailableCheckouts> available = new ArrayList<>();
+        for (Library library : libraries) {
+            LibraryAvailableCheckouts temp;
+            for (CheckableAmount checkableAmount : library.getCheckables()) {
+                if (checkableAmount.getCheckable().equals(checkable)) {
+                    temp = new LibraryAvailableCheckouts(checkableAmount.getAmount(), library.getName());
+                    available.add(temp);
+                }
+            }
+        } return available;
     }
 
     public List<OverdueCheckout> getOverdueCheckouts(String libraryName) {
         List<OverdueCheckout> overdueCheckouts = new ArrayList<>();
-
-        return overdueCheckouts;
+        Optional<Library> libraryOptional = libraryRepository.findByName(libraryName);
+//
+        Set<LibraryCard> libraryCards = libraryOptional.get().getLibraryCards();
+        for (LibraryCard libraryCard : libraryCards) {
+            for (Checkout checkout : libraryCard.getCheckouts()) {
+                if (checkout != null && checkout.getDueDate().isBefore(LocalDateTime.now())) {
+                    overdueCheckouts.add(new OverdueCheckout(libraryCard.getPatron(), checkout));
+                }
+            }
+        } return overdueCheckouts;
     }
 }
