@@ -34,9 +34,12 @@ public class LibraryService {
 
     public Library getLibraryByName(String name) {
         Optional<Library> libraries = libraryRepository.findByName(name);
-        Library library = libraries.get();
+        if (libraries.isPresent()) {
+            return libraries.get();
 
-        return library;
+        } else {
+            throw new LibraryNotFoundException("No library found by the name "+ name);
+        }
     }
 
     public void save(Library library) {
