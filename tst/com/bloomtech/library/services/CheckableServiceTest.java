@@ -51,7 +51,6 @@ public class CheckableServiceTest {
         );
     }
 
-
     @Test
     void getAll_noConditions_allCheckablesReturned() {
         when(checkableRepository.findAll()).thenReturn(checkables);

@@ -21,9 +21,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class LibraryService {
-
-    //TODO: Implement behavior described by the unit tests in tst.com.bloomtech.library.services.LibraryService
-
     @Autowired
     private LibraryRepository libraryRepository;
     @Autowired
@@ -62,9 +59,7 @@ public class LibraryService {
                 return checkableAmount;
 
             }
-        }
-
-        return new CheckableAmount(checkable,0 );
+        } return new CheckableAmount(checkable,0 );
     }
 
     public List<LibraryAvailableCheckouts> getLibrariesWithAvailableCheckout(String isbn) {
