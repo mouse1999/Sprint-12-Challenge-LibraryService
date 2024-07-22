@@ -95,7 +95,7 @@ public class CheckableServiceTest {
     void getByType_ticketTypeExists_firstCheckableReturned() {
         when(checkableRepository.findByType(Ticket.class)).thenReturn(Optional.of(checkables.get(6)));
 
-        Checkable checkableByType = checkableService.getByType(ScienceKit.class);
+        Checkable checkableByType = checkableService.getByType(Ticket.class);
         assertEquals(checkables.get(6), checkableByType);
 
     }
